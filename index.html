@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rashika Tamang Portfolio</title>
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #fceef5; /* pastel dreamy background */
+            color: #333;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        header {
+            background: #f7d9f0;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        header img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-top: 20px;
+            color: #d46cae;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            color: #b55f99;
+        }
+
+        nav {
+            background: #f5c7e2;
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            gap: 30px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            color: #fff;
+        }
+
+        section {
+            padding: 60px 20px;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+            color: #d46cae;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .about, .services, .contact {
+            background: #fde5f3;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        ul.skills {
+            list-style: none;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        ul.skills li {
+            background: #f7d9f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #b55f99;
+            font-weight: bold;
+        }
+
+        .service-item {
+            background: #f7d9f0;
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .contact form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .contact input, .contact textarea {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #d46cae;
+            font-size: 1rem;
+        }
+
+        .contact button {
+            padding: 12px;
+            background: #d46cae;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .contact button:hover {
+            background: #b55f99;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            background: #f7d9f0;
+            color: #b55f99;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <img src="profile.jpg" alt="Rashika Tamang Profile Picture">
+        <h1>Rashika Tamang</h1>
+        <p>Writer, Tutor, and Dreamer</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="#about">About</a>
+        <a href="#services">Services</a>
+        <a href="#portfolio">Portfolio</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <h2>About Me</h2>
+        <p>Hi, I'm Rashika Tamang, originally from Nepal and currently located in Busan, South Korea. I have a passion for writing, crocheting, making pastries, and listening to music. I aim to achieve great things in life, especially growing my parents’ business.</p>
+        <h3>Education</h3>
+        <ul>
+            <li>High School: Southwestern State School, 2024</li>
+            <li>Currently Studying: Dong-A University, Bumin Campus, Integrated Business Management, graduating 2029</li>
+        </ul>
+        <h3>Skills</h3>
+        <ul class="skills">
+            <li>Nepali</li>
+            <li>Hindi</li>
+            <li>English</li>
+            <li>Basic Korean</li>
+        </ul>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <h2>Services</h2>
+        <div class="service-item">
+            <h3>Writing</h3>
+            <p>Creative writing and content creation with school award-winning experience.</p>
+        </div>
+        <div class="service-item">
+            <h3>Translation</h3>
+            <p>Translation between Nepali, Hindi, English, and basic Korean.</p>
+        </div>
+        <div class="service-item">
+            <h3>Tutoring</h3>
+            <p>Language tutoring and academic support in multiple languages.</p>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio">
+        <h2>Portfolio</h2>
+        <p style="text-align:center;">Currently showcasing writing awards and personal creative works. Projects will be added soon!</p>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <h2>Contact Me</h2>
+        <form action="mailto:rashikatamang0@gmail.com" method="post" enctype="text/plain">
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="email" name="email" placeholder="Your Email" required>
+            <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+        <p style="text-align:center; margin-top:20px;">Or email me directly: <a href="mailto:rashikatamang0@gmail.com">rashikatamang0@gmail.com</a></p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2025 Rashika Tamang. All rights reserved.
+    </footer>
+
+</body>
+</html>
