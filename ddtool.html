@@ -1,86 +1,233 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>DDTool – CSV Data Diagnostics</title>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body{font-family:Arial;margin:20px}
-    table,th,td{border:1px solid #aaa;border-collapse:collapse;padding:4px}
-    canvas{max-width:600px}
-  </style>
+<meta charset="UTF-8">
+<title>CSV Data Analysis Tool</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  padding: 20px;
+}
+
+.card {
+  background: #fff;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px;
+}
+
+th {
+  background: #eee;
+}
+
+.highlight {
+  background-color: #ffd6d6;
+}
+</style>
 </head>
+
 <body>
-<h2>DDTool (CSV Data Diagnostics Tool)</h2>
-<input type="file" id="file">
-<div id="output"></div>
-<canvas id="chart"></canvas>
+
+<h2>CSV Data Analysis Tool</h2>
+
+<div class="card">
+  <label><b>Upload CSV File:</b></label><br>
+  <input type="file" id="csvFile" accept=".csv">
+</div>
+
+<div class="card">
+  <h3>Descriptive Statistics</h3>
+  <div id="stats"></div>
+</div>
+
+<div class="card">
+  <h3>Full Dataset (Anomalies Highlighted)</h3>
+  <p><b>Note:</b> Red rows indicate anomalous records.</p>
+  <div id="fullTable"></div>
+</div>
+
+<div class="card">
+  <h3>Anomalous Records (Z-score ≥ 3)</h3>
+  <p><b>Total Records:</b> <span id="totalCount">0</span></p>
+  <p><b>Anomalous Records:</b> <span id="anomalyCount">0</span></p>
+  <div id="anomalyTable"></div>
+</div>
+
+<div class="card">
+  <h3>Visualization</h3>
+  <label>Select Numeric Column:</label>
+  <select id="chartColumn"></select>
+  <canvas id="chart"></canvas>
+</div>
 
 <script>
-let data=[], headers=[];
+let rawData = [];
+let headers = [];
+let chartInstance = null;
+let anomalyIndexSet = new Set();
 
-file.onchange = e => {
-  Papa.parse(e.target.files[0], {
-    header:true, dynamicTyping:true,
-    complete:r=>{
-      data=r.data; headers=r.meta.fields;
-      showTable(data);
-      stats(); uniques(); anomalies();
+document.getElementById("csvFile").addEventListener("change", handleFile);
+
+function handleFile(e) {
+  const reader = new FileReader();
+  reader.onload = () => parseCSV(reader.result);
+  reader.readAsText(e.target.files[0]);
+}
+
+function parseCSV(text) {
+  const rows = text.trim().split("\n");
+  headers = rows[0].split(",");
+
+  rawData = rows.slice(1).map(r => {
+    const values = r.split(",");
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = values[i]);
+    return obj;
+  });
+
+  computeStats();
+  detectAnomalies();
+  renderFullTable();
+  setupChart();
+}
+
+function isNumericColumn(col) {
+  return rawData.every(r => !isNaN(parseFloat(r[col])));
+}
+
+function computeStats() {
+  let html = "<table><tr><th>Column</th><th>Mean</th><th>SD</th><th>Min</th><th>Max</th></tr>";
+
+  headers.forEach(h => {
+    if (!isNumericColumn(h)) return;
+
+    const nums = rawData.map(r => parseFloat(r[h]));
+    const mean = nums.reduce((a,b)=>a+b,0)/nums.length;
+    const sd = Math.sqrt(nums.reduce((a,b)=>a+(b-mean)**2,0)/nums.length);
+
+    html += `<tr>
+      <td>${h}</td>
+      <td>${mean.toFixed(2)}</td>
+      <td>${sd.toFixed(2)}</td>
+      <td>${Math.min(...nums)}</td>
+      <td>${Math.max(...nums)}</td>
+    </tr>`;
+  });
+
+  html += "</table>";
+  document.getElementById("stats").innerHTML = html;
+}
+
+function detectAnomalies() {
+  anomalyIndexSet.clear();
+  let anomalyRows = [];
+  let anomalyCount = 0;
+
+  rawData.forEach((row, index) => {
+    let isAnomaly = false;
+
+    headers.forEach(h => {
+      if (isNumericColumn(h)) {
+        const nums = rawData.map(r => parseFloat(r[h]));
+        const mean = nums.reduce((a,b)=>a+b,0)/nums.length;
+        const sd = Math.sqrt(nums.reduce((a,b)=>a+(b-mean)**2,0)/nums.length);
+
+        if (sd !== 0) {
+          const z = (parseFloat(row[h]) - mean) / sd;
+          if (Math.abs(z) >= 3) isAnomaly = true;
+        }
+      }
+    });
+
+    if (isAnomaly) {
+      anomalyCount++;
+      anomalyRows.push(row);
+      anomalyIndexSet.add(index);
     }
   });
-};
 
-function showTable(rows){
-  let h='<table><tr>'+headers.map(x=>`<th>${x}</th>`).join('')+'</tr>';
-  rows.forEach(r=>{h+='<tr>'+headers.map(x=>`<td>${r[x]}</td>`).join('')+'</tr>'});
-  output.innerHTML=h+'</table>';
+  document.getElementById("totalCount").textContent = rawData.length;
+  document.getElementById("anomalyCount").textContent = anomalyCount;
+
+  let html = "<table><tr>";
+  headers.forEach(h => html += `<th>${h}</th>`);
+  html += "</tr>";
+
+  anomalyRows.forEach(r => {
+    html += "<tr class='highlight'>";
+    headers.forEach(h => html += `<td>${r[h]}</td>`);
+    html += "</tr>";
+  });
+
+  html += "</table>";
+  document.getElementById("anomalyTable").innerHTML = html;
 }
 
-function stats(){
-  headers.forEach(c=>{
-    let n=data.map(r=>r[c]).filter(v=>typeof v==='number');
-    if(n.length){
-      let m=n.reduce((a,b)=>a+b)/n.length;
-      output.innerHTML+=`<p>${c} → min:${Math.min(...n)} max:${Math.max(...n)} mean:${m.toFixed(2)}</p>`;
+function renderFullTable() {
+  let html = "<table><tr>";
+  headers.forEach(h => html += `<th>${h}</th>`);
+  html += "</tr>";
+
+  rawData.forEach((row, index) => {
+    const cls = anomalyIndexSet.has(index) ? "highlight" : "";
+    html += `<tr class="${cls}">`;
+    headers.forEach(h => html += `<td>${row[h]}</td>`);
+    html += "</tr>";
+  });
+
+  html += "</table>";
+  document.getElementById("fullTable").innerHTML = html;
+}
+
+function setupChart() {
+  const select = document.getElementById("chartColumn");
+  select.innerHTML = "";
+
+  headers.forEach(h => {
+    if (isNumericColumn(h)) {
+      select.add(new Option(h, h));
     }
   });
+
+  select.onchange = drawChart;
+  drawChart();
 }
 
-function uniques(){
-  headers.forEach(c=>{
-    let u=new Set(data.map(r=>r[c]));
-    output.innerHTML+=`<p>${c} unique values: ${u.size}</p>`;
-  });
-}
+function drawChart() {
+  const col = document.getElementById("chartColumn").value;
+  if (!col) return;
 
-function anomalies(){
-  headers.forEach(c=>{
-    let n=data.map(r=>r[c]).filter(v=>typeof v==='number').sort((a,b)=>a-b);
-    if(!n.length) return;
-    let q1=n[Math.floor(n.length*0.25)], q3=n[Math.floor(n.length*0.75)];
-    let iqr=q3-q1, lo=q1-1.5*iqr, hi=q3+1.5*iqr;
-    let a=data.filter(r=>r[c]<lo||r[c]>hi);
-    output.innerHTML+=`<p>${c} anomalies: ${a.length}</p>`;
-  });
-}
+  const data = rawData.map(r => parseFloat(r[col]));
 
-// simple date trend (monthly sum of first numeric column)
-function trend(dateCol,valCol){
-  let m={};
-  data.forEach(r=>{
-    let d=new Date(r[dateCol]);
-    let k=d.getFullYear()+'-'+(d.getMonth()+1);
-    m[k]=(m[k]||0)+r[valCol];
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: {
+      labels: data.map((_,i)=>i+1),
+      datasets: [{ label: col, data }]
+    }
   });
-  new Chart(chart,{type:'line',data:{labels:Object.keys(m),datasets:[{data:Object.values(m)}]}});
 }
 </script>
 
-<p><b>Usage notes:</b><br>
-• Upload CSV → full preview<br>
-• Stats, unique counts & anomalies auto-run<br>
-• Use <code>trend(dateColumn,valueColumn)</code> in console for time analysis<br>
-• Data can be filtered/grouped by editing JS (GitHub-friendly)</p>
 </body>
 </html>
+
