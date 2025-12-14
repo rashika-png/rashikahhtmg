@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DDTool – CSV Data Diagnostics</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body{font-family:Arial;margin:20px}
+    table,th,td{border:1px solid #aaa;border-collapse:collapse;padding:4px}
+    canvas{max-width:600px}
+  </style>
+</head>
+<body>
+<h2>DDTool (CSV Data Diagnostics Tool)</h2>
+<input type="file" id="file">
+<div id="output"></div>
+<canvas id="chart"></canvas>
+
+<script>
+let data=[], headers=[];
+
+file.onchange = e => {
+  Papa.parse(e.target.files[0], {
+    header:true, dynamicTyping:true,
+    complete:r=>{
+      data=r.data; headers=r.meta.fields;
+      showTable(data);
+      stats(); uniques(); anomalies();
+    }
+  });
+};
+
+function showTable(rows){
+  let h='<table><tr>'+headers.map(x=>`<th>${x}</th>`).join('')+'</tr>';
+  rows.forEach(r=>{h+='<tr>'+headers.map(x=>`<td>${r[x]}</td>`).join('')+'</tr>'});
+  output.innerHTML=h+'</table>';
+}
+
+function stats(){
+  headers.forEach(c=>{
+    let n=data.map(r=>r[c]).filter(v=>typeof v==='number');
+    if(n.length){
+      let m=n.reduce((a,b)=>a+b)/n.length;
+      output.innerHTML+=`<p>${c} → min:${Math.min(...n)} max:${Math.max(...n)} mean:${m.toFixed(2)}</p>`;
+    }
+  });
+}
+
+function uniques(){
+  headers.forEach(c=>{
+    let u=new Set(data.map(r=>r[c]));
+    output.innerHTML+=`<p>${c} unique values: ${u.size}</p>`;
+  });
+}
+
+function anomalies(){
+  headers.forEach(c=>{
+    let n=data.map(r=>r[c]).filter(v=>typeof v==='number').sort((a,b)=>a-b);
+    if(!n.length) return;
+    let q1=n[Math.floor(n.length*0.25)], q3=n[Math.floor(n.length*0.75)];
+    let iqr=q3-q1, lo=q1-1.5*iqr, hi=q3+1.5*iqr;
+    let a=data.filter(r=>r[c]<lo||r[c]>hi);
+    output.innerHTML+=`<p>${c} anomalies: ${a.length}</p>`;
+  });
+}
+
+// simple date trend (monthly sum of first numeric column)
+function trend(dateCol,valCol){
+  let m={};
+  data.forEach(r=>{
+    let d=new Date(r[dateCol]);
+    let k=d.getFullYear()+'-'+(d.getMonth()+1);
+    m[k]=(m[k]||0)+r[valCol];
+  });
+  new Chart(chart,{type:'line',data:{labels:Object.keys(m),datasets:[{data:Object.values(m)}]}});
+}
+</script>
+
+<p><b>Usage notes:</b><br>
+• Upload CSV → full preview<br>
+• Stats, unique counts & anomalies auto-run<br>
+• Use <code>trend(dateColumn,valueColumn)</code> in console for time analysis<br>
+• Data can be filtered/grouped by editing JS (GitHub-friendly)</p>
+</body>
+</html>
